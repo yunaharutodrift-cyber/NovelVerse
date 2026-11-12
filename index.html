@@ -406,6 +406,7 @@ function renderBooks(){
  });
 }
 
+
 async function importBook(event){
  const file=event.target.files[0];
  if(!file)return;
@@ -414,26 +415,40 @@ async function importBook(event){
 
  if(!["epub","pdf","txt"].includes(extension)){
   notify("Please select an EPUB, PDF or TXT file.");
+  event.target.value="";
   return;
  }
 
  const id="book_"+Date.now();
- const book={
-  id,
-  title:file.name.replace(/\.[^/.]+$/,""),
-  type:extension,
-  progress:"",
-  bookmarks:[]
- };
 
  try{
-  await saveFile(id,file);
-  books.push(book);
+  notify("Importing book...");
+
+  const db=await openDB();
+
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction("files","readwrite");
+   tx.objectStore("files").put(file,id);
+   tx.oncomplete=resolve;
+   tx.onerror=()=>reject(tx.error);
+   tx.onabort=()=>reject(tx.error);
+  });
+
+  books.push({
+   id:id,
+   title:file.name.replace(/\.[^/.]+$/,""),
+   type:extension,
+   progress:"",
+   bookmarks:[]
+  });
+
   saveBooks();
   renderBooks();
   notify("Book imported successfully!");
+
  }catch(error){
-  notify("Could not save this book. Check browser storage.");
+  console.error(error);
+  notify("Import failed: "+error.message);
  }
 
  event.target.value="";
