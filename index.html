@@ -706,6 +706,18 @@ function closeReader(){
 
 function toggleFullscreen(){
  const reader=$("reader");
+ const active=reader.classList.toggle("immersive");
+
+ $("fullscreenControls").style.display =
+  active ? "flex" : "none";
+
+ if(active && reader.requestFullscreen){
+  reader.requestFullscreen().catch(()=>{});
+ }else if(!active && document.fullscreenElement){
+  document.exitFullscreen().catch(()=>{});
+ }
+}
+ const reader=$("reader");
  reader.classList.toggle("immersive");
 
  if(reader.classList.contains("immersive")){
